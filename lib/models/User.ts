@@ -2,9 +2,13 @@ import mongoose, { Document, Schema } from 'mongoose';
 import bcrypt from 'bcryptjs';
 
 export interface IUser extends Document {
+  firstName: string;
+  lastName: string;
   email: string;
   password: string;
-  name: string;
+  university: string;
+  major: string;
+  year: string;
   role: 'user' | 'admin';
   createdAt: Date;
   updatedAt: Date;
@@ -12,6 +16,14 @@ export interface IUser extends Document {
 }
 
 const UserSchema = new Schema<IUser>({
+  firstName: {
+    type: String,
+    required: [true, 'First name is required'],
+  },
+  lastName: {
+    type: String,
+    required: [true, 'Last name is required'],
+  },
   email: {
     type: String,
     required: [true, 'Email is required'],
@@ -23,9 +35,17 @@ const UserSchema = new Schema<IUser>({
     required: [true, 'Password is required'],
     minlength: 6,
   },
-  name: {
+  university: {
     type: String,
-    required: [true, 'Name is required'],
+    required: [true, 'University is required'],
+  },
+  major: {
+    type: String,
+    required: [true, 'Major is required'],
+  },
+  year: {
+    type: String,
+    required: [true, 'Year is required'],
   },
   role: {
     type: String,
