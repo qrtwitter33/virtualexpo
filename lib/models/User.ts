@@ -1,39 +1,57 @@
-import mongoose from 'mongoose'
+import mongoose, { Document, Schema } from 'mongoose';
+import bcrypt from 'bcryptjs';
 
-const UserSchema = new mongoose.Schema({
-  firstName: {
-    type: String,
-    required: [true, 'First name is required'],
-  },
-  lastName: {
-    type: String,
-    required: [true, 'Last name is required'],
-  },
+export interface IUser extends Document {
+  email: string;
+  password: string;
+  name: string;
+  role: 'user' | 'admin';
+  createdAt: Date;
+  updatedAt: Date;
+  comparePassword(candidatePassword: string): Promise<boolean>;
+}
+
+const UserSchema = new Schema<IUser>({
   email: {
     type: String,
     required: [true, 'Email is required'],
     unique: true,
+    lowercase: true,
   },
   password: {
     type: String,
     required: [true, 'Password is required'],
+    minlength: 6,
   },
-  university: {
+  name: {
     type: String,
-    required: [true, 'University is required'],
+    required: [true, 'Name is required'],
   },
-  major: {
+  role: {
     type: String,
-    required: [true, 'Major is required'],
+    enum: ['user', 'admin'],
+    default: 'user',
   },
-  year: {
-    type: String,
-    required: [true, 'Year is required'],
-  },
-  createdAt: {
-    type: Date,
-    default: Date.now,
-  },
-})
+}, {
+  timestamps: true,
+});
 
-export default mongoose.models.User || mongoose.model('User', UserSchema)
+// Hash password before saving
+UserSchema.pre('save', async function(next) {
+  if (!this.isModified('password')) return next();
+  
+  try {
+    const salt = await bcrypt.genSalt(12);
+    this.password = await bcrypt.hash(this.password, salt);
+    next();
+  } catch (error) {
+    next(error as Error);
+  }
+});
+
+// Compare password method
+UserSchema.methods.comparePassword = async function(candidatePassword: string): Promise<boolean> {
+  return bcrypt.compare(candidatePassword, this.password);
+};
+
+export default mongoose.models.User as mongoose.Model<IUser> || mongoose.model<IUser>('User', UserSchema);
